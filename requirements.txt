@@ -1,0 +1,4 @@
+manim>=0.18.1
+gradio>=4.0.0
+google-genai
+python-dotenv
