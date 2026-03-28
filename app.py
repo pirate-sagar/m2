@@ -42,16 +42,16 @@ def format_solution_info(result) -> str:
 
     # ── Status ──
     if result.success:
-        lines.append(f"### ✅ Solved in {result.total_time:.1f}s ({result.attempts} render attempt{'s' if result.attempts > 1 else ''})\n")
+        lines.append(f"### Solved in {result.total_time:.1f}s ({result.attempts} render attempt{'s' if result.attempts > 1 else ''})\n")
     else:
-        lines.append(f"### ❌ Failed after {result.total_time:.1f}s\n")
+        lines.append(f"### Failed after {result.total_time:.1f}s\n")
         if result.error:
             lines.append(f"**Error:** {result.error}\n")
 
     # ── System Description ──
     if result.parsed_system:
         p = result.parsed_system
-        lines.append(f"---\n### 📐 System Analysis\n")
+        lines.append(f"---\n### System Analysis\n")
         lines.append(f"**Type:** {p.get('system_type', 'general').title()}\n")
         n_vars = len(p.get('variables', ['x', 'y']))
         n_eqs = len(p.get('equations', []))
@@ -63,14 +63,14 @@ def format_solution_info(result) -> str:
 
     # ── Solutions ──
     if result.solution and result.solution.solutions:
-        lines.append(f"\n---\n### 🎯 Solutions Found: {len(result.solution.solutions)}\n")
+        lines.append(f"\n---\n### Solutions Found: {len(result.solution.solutions)}\n")
         for i, sol in enumerate(result.solution.solutions):
             coords = ", ".join(f"{v} = {s:.6f}" for v, s in zip(result.solution.variables, sol))
             lines.append(f"**Solution {i+1}:** ({coords})\n")
 
     # ── Newton Iteration Table ──
     if result.solution and result.solution.newton_history:
-        lines.append(f"\n---\n### 🔄 Newton's Method Iterations\n")
+        lines.append(f"\n---\n### Newton's Method Iterations\n")
         variables = result.solution.variables
         for g_idx, history in enumerate(result.solution.newton_history):
             if not history:
@@ -89,9 +89,9 @@ def format_solution_info(result) -> str:
                     f"| {step.iteration} | {var_vals} | {step.residual:.2e} |\n"
                 )
             if history[-1].residual < 1e-6:
-                lines.append(f"\n✅ **Converged** at iteration {history[-1].iteration}\n")
+                lines.append(f"\n**Converged** at iteration {history[-1].iteration}\n")
             else:
-                lines.append(f"\n⚠️ Did not converge (final residual: {history[-1].residual:.2e})\n")
+                lines.append(f"\nDid not converge (final residual: {history[-1].residual:.2e})\n")
 
     return "".join(lines)
 
@@ -102,11 +102,11 @@ def format_code_section(result) -> str:
         return "No code was generated."
 
     lines = []
-    lines.append("### 💻 Generated Manim Code\n\n")
+    lines.append("### Generated Manim Code\n\n")
     lines.append(f"```python\n{result.generated_code}\n```\n")
 
     if result.render_logs:
-        lines.append("\n---\n### 📋 Render Logs\n\n")
+        lines.append("\n---\n### Render Logs\n\n")
         # Truncate very long logs
         logs = result.render_logs
         if len(logs) > 3000:
@@ -122,7 +122,7 @@ def solve_and_animate(prompt: str):
         return None, "Please enter a question about a nonlinear system.", ""
 
     if not os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY") == "your_api_key_here":
-        return None, "⚠️ **GEMINI_API_KEY** is not set. Please configure it in your `.env` file.", ""
+        return None, "**GEMINI_API_KEY** is not set. Please configure it in your `.env` file.", ""
 
     result = run_pipeline(user_prompt=prompt.strip(), max_retries=3)
 
@@ -173,12 +173,12 @@ theme_config = gr.themes.Soft(
 )
 
 with gr.Blocks(
-    title="Nonlinear Systems Solver",
+    title="Math Motion (m2)",
 ) as demo:
 
     gr.HTML("""
         <div style="text-align: center; padding: 20px 0 10px 0;">
-            <h1 class="main-title">🧮 Nonlinear Systems Solver</h1>
+            <h1 class="main-title">Math Motion (m2)</h1>
             <p class="subtitle">Describe a nonlinear system — AI will solve it and create a visual animation</p>
         </div>
     """)
@@ -186,7 +186,7 @@ with gr.Blocks(
     with gr.Row(equal_height=False):
         # ── Left Column: Input ──
         with gr.Column(scale=5, elem_classes=["box-container"]):
-            gr.Markdown("### 📝 Enter Problem")
+            gr.Markdown("### Enter Problem")
             prompt_input = gr.Textbox(
                 label="",
                 placeholder="e.g. 'Solve x² + y² = 25 and y = x²'\nor 'Solve x² + y² + z² = 14, x + y + z = 6, xz = y'",
@@ -195,13 +195,13 @@ with gr.Blocks(
                 show_label=False,
             )
             generate_btn = gr.Button(
-                "🚀 Solve & Animate",
+                "Solve & Animate",
                 variant="primary",
                 size="lg",
             )
             
             gr.Markdown("---")
-            gr.Markdown("**🌟 Or try an example:**")
+            gr.Markdown("**Or try an example:**")
             example_btns = []
             for ex in EXAMPLES:
                 btn = gr.Button(ex, variant="secondary", size="sm")
@@ -219,11 +219,11 @@ with gr.Blocks(
     # ── Bottom: Details ──
     with gr.Row():
         with gr.Column():
-            with gr.Accordion("📊 Solution Details", open=True):
+            with gr.Accordion("Solution Details", open=True):
                 solution_info = gr.Markdown(
                     value="*Enter a problem above and click 'Solve & Animate' to get started.*"
                 )
-            with gr.Accordion("💻 Generated Code & Logs", open=False):
+            with gr.Accordion("Generated Code & Logs", open=False):
                 code_output = gr.Markdown(value="")
 
     # ── Wire it up ──
@@ -242,5 +242,5 @@ with gr.Blocks(
 
 if __name__ == "__main__":
     if not os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY") == "your_api_key_here":
-        print("⚠️  Warning: GEMINI_API_KEY is not set. Please set it in your .env file.")
+        print("Warning: GEMINI_API_KEY is not set. Please set it in your .env file.")
     demo.launch(theme=theme_config, css=custom_css)

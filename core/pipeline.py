@@ -49,18 +49,18 @@ def run_pipeline(
             progress_callback(step, detail)
 
     # ── Step 1: Parse the system using Gemini ──
-    update("🔍 Analyzing", "Parsing your equations with Gemini AI...")
+    update("Analyzing", "Parsing your equations with Gemini AI...")
     try:
         parsed = analyze_nonlinear_system(user_prompt)
         result.parsed_system = parsed
-        update("🔍 Analyzing", f"Found system: {parsed.get('description', 'nonlinear system')}")
+        update("Analyzing", f"Found system: {parsed.get('description', 'nonlinear system')}")
     except Exception as e:
         result.error = f"Failed to parse the system: {e}"
         result.total_time = time.time() - start_time
         return result
 
     # ── Step 2: Solve numerically with SymPy + Newton's method ──
-    update("🧮 Solving", "Running Newton's method...")
+    update("Solving", "Running Newton's method...")
     try:
         solution = solve_system_from_parsed(parsed)
         result.solution = solution
@@ -69,12 +69,12 @@ def run_pipeline(
             sols_str = ", ".join(
                     "(" + ", ".join(f"{v:.4f}" for v in s) + ")" for s in solution.solutions
                 )
-            update("🧮 Solving", f"Found {len(solution.solutions)} solution(s): {sols_str}")
+            update("Solving", f"Found {len(solution.solutions)} solution(s): {sols_str}")
         else:
-            update("🧮 Solving", f"Solver note: {solution.error_message}. Will still generate visual.")
+            update("Solving", f"Solver note: {solution.error_message}. Will still generate visual.")
     except Exception as e:
         # Solver failure is non-fatal — we can still generate an animation
-        update("🧮 Solving", f"Numerical solver encountered an issue: {e}. Continuing with animation.")
+        update("Solving", f"Numerical solver encountered an issue: {e}. Continuing with animation.")
         result.solution = SolutionResult(
             equations_latex=parsed.get("equations_latex", []),
             equations_raw=parsed.get("equations", []),
@@ -89,7 +89,7 @@ def run_pipeline(
         )
 
     # ── Step 3: Generate Manim animation code ──
-    update("🎨 Generating", "Creating animation code with Gemini AI...")
+    update("Generating", "Creating animation code with Gemini AI...")
     try:
         code = generate_solution_animation(
             parsed_system=parsed,
@@ -97,7 +97,7 @@ def run_pipeline(
             newton_histories=result.solution.newton_history if result.solution else [],
         )
         result.generated_code = code
-        update("🎨 Generating", f"Generated {len(code.splitlines())} lines of Manim code")
+        update("Generating", f"Generated {len(code.splitlines())} lines of Manim code")
     except Exception as e:
         result.error = f"Failed to generate animation code: {e}"
         result.total_time = time.time() - start_time
@@ -106,7 +106,7 @@ def run_pipeline(
     # ── Step 4: Render with retries ──
     for attempt in range(1, max_retries + 1):
         result.attempts = attempt
-        update("🎬 Rendering", f"Attempt {attempt}/{max_retries} — running Manim...")
+        update("Rendering", f"Attempt {attempt}/{max_retries} — running Manim...")
 
         video_path, logs = render_manim_video(result.generated_code)
         result.render_logs = logs
@@ -114,21 +114,21 @@ def run_pipeline(
         if video_path and os.path.exists(video_path):
             result.video_path = video_path
             result.success = True
-            update("✅ Complete", f"Video rendered successfully on attempt {attempt}!")
+            update("Complete", f"Video rendered successfully on attempt {attempt}!")
             break
         else:
-            update("🔧 Fixing", f"Attempt {attempt} failed. Asking Gemini to fix the code...")
+            update("Fixing", f"Attempt {attempt} failed. Asking Gemini to fix the code...")
             if attempt < max_retries:
                 try:
                     fixed_code = fix_manim_code(result.generated_code, logs)
                     result.generated_code = fixed_code
-                    update("🔧 Fixing", "Code fixed. Retrying render...")
+                    update("Fixing", "Code fixed. Retrying render...")
                 except Exception as e:
-                    update("🔧 Fixing", f"Fix attempt failed: {e}")
+                    update("Fixing", f"Fix attempt failed: {e}")
 
     if not result.success:
         result.error = "All render attempts failed. See logs for details."
-        update("❌ Failed", result.error)
+        update("Failed", result.error)
 
     result.total_time = time.time() - start_time
     return result

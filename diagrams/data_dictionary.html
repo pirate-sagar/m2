@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #ffffff;
+    color: #1e293b;
+    padding: 48px 56px;
+    width: 1600px;
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 12px;
+  }
+  h1 span { color: #3b82f6; }
+  .subtitle {
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 36px;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e40af;
+    margin-top: 32px;
+    margin-bottom: 4px;
+  }
+  .source {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    font-size: 13.5px;
+  }
+  thead th {
+    background: #1e3a5f;
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  thead th:first-child { border-radius: 8px 0 0 0; }
+  thead th:last-child { border-radius: 0 8px 0 0; }
+  tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody tr:hover { background: #eff6ff; }
+  code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12.5px;
+    color: #7c3aed;
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag-req { background: #fef2f2; color: #dc2626; }
+  .tag-opt { background: #f0fdf4; color: #16a34a; }
+  .tag-default { background: #eff6ff; color: #2563eb; }
+  .divider {
+    border: none;
+    border-top: 2px solid #e2e8f0;
+    margin: 28px 0;
+  }
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .two-col > div h2 { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<h1><span></span> Data Dictionary — Nonlinear Systems Solver</h1>
+<p class="subtitle">Comprehensive reference of all data structures, fields, types, and constraints</p>
+
+<!-- 1. NewtonStep -->
+<h2>1. NewtonStep</h2>
+<p class="source">core/solver.py — @dataclass</p>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>iteration</code></td><td><code>int</code></td><td>≥ 0</td><td>Zero-based iteration index</td></tr>
+    <tr><td><code>point</code></td><td><code>tuple[float, ...]</code></td><td>Length = N vars</td><td>Current point coordinates at this iteration</td></tr>
+    <tr><td><code>residual</code></td><td><code>float</code></td><td>≥ 0</td><td>‖F(x)‖ — Euclidean norm of the system</td></tr>
+  </tbody>
+</table>
+
+<!-- 2. SolutionResult -->
+<h2>2. SolutionResult</h2>
+<p class="source">core/solver.py — @dataclass</p>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>equations_latex</code></td><td><code>list[str]</code></td><td>—</td><td>LaTeX-formatted equation strings for display</td></tr>
+    <tr><td><code>equations_raw</code></td><td><code>list[str]</code></td><td>—</td><td>SymPy-compatible expression strings (set = 0)</td></tr>
+    <tr><td><code>variables</code></td><td><code>list[str]</code></td><td>—</td><td>Variable names, e.g. ["x", "y", "z"]</td></tr>
+    <tr><td><code>solutions</code></td><td><code>list[tuple]</code></td><td>—</td><td>List of converged solution points (deduplicated)</td></tr>
+    <tr><td><code>newton_history</code></td><td><code>list[list[NewtonStep]]</code></td><td>—</td><td>One iteration history per initial guess</td></tr>
+    <tr><td><code>system_type</code></td><td><code>str</code></td><td>—</td><td>polynomial | trigonometric | exponential | mixed</td></tr>
+    <tr><td><code>x_range</code></td><td><code>tuple[float, float]</code></td><td>—</td><td>Plot range for x-axis</td></tr>
+    <tr><td><code>y_range</code></td><td><code>tuple[float, float]</code></td><td>—</td><td>Plot range for y-axis</td></tr>
+    <tr><td><code>z_range</code></td><td><code>tuple[float, float]</code></td><td><code>(-6.0, 6.0)</code></td><td>Plot range for z-axis (3D+ systems)</td></tr>
+    <tr><td><code>success</code></td><td><code>bool</code></td><td><code>True</code></td><td>Whether at least one solution converged</td></tr>
+    <tr><td><code>error_message</code></td><td><code>str</code></td><td><code>""</code></td><td>Error details if solver failed</td></tr>
+  </tbody>
+</table>
+
+<!-- 3. PipelineResult -->
+<h2>3. PipelineResult</h2>
+<p class="source">core/pipeline.py — @dataclass</p>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>video_path</code></td><td><code>Optional[str]</code></td><td><code>None</code></td><td>Absolute path to the rendered .mp4 animation file</td></tr>
+    <tr><td><code>solution</code></td><td><code>Optional[SolutionResult]</code></td><td><code>None</code></td><td>Numerical solver results (solutions + Newton history)</td></tr>
+    <tr><td><code>parsed_system</code></td><td><code>Optional[dict]</code></td><td><code>None</code></td><td>Gemini-parsed system (equations, variables, guesses)</td></tr>
+    <tr><td><code>generated_code</code></td><td><code>str</code></td><td><code>""</code></td><td>Complete Manim Python source code</td></tr>
+    <tr><td><code>render_logs</code></td><td><code>str</code></td><td><code>""</code></td><td>Combined stdout/stderr from Manim render</td></tr>
+    <tr><td><code>attempts</code></td><td><code>int</code></td><td><code>0</code></td><td>Number of render attempts made (1–3)</td></tr>
+    <tr><td><code>total_time</code></td><td><code>float</code></td><td><code>0.0</code></td><td>Total pipeline execution time in seconds</td></tr>
+    <tr><td><code>error</code></td><td><code>str</code></td><td><code>""</code></td><td>Top-level error message (empty if successful)</td></tr>
+    <tr><td><code>success</code></td><td><code>bool</code></td><td><code>False</code></td><td>True if video was successfully rendered</td></tr>
+  </tbody>
+</table>
+
+<!-- 4. parsed_system dict -->
+<h2>4. parsed_system (Gemini Parse Output)</h2>
+<p class="source">Returned by core/agent.py :: analyze_nonlinear_system()</p>
+<table>
+  <thead><tr><th>Key</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>equations</code></td><td><code>list[str]</code></td><td><span class="tag tag-req">Required</span></td><td>—</td><td>SymPy expressions set = 0</td></tr>
+    <tr><td><code>equations_latex</code></td><td><code>list[str]</code></td><td><span class="tag tag-opt">Optional</span></td><td>= equations</td><td>Human-readable LaTeX forms</td></tr>
+    <tr><td><code>variables</code></td><td><code>list[str]</code></td><td><span class="tag tag-req">Required</span></td><td>—</td><td>Variable names (x, y, z, w, …)</td></tr>
+    <tr><td><code>initial_guesses</code></td><td><code>list[list[float]]</code></td><td><span class="tag tag-req">Required</span></td><td>—</td><td>4–10 starting points for Newton's method</td></tr>
+    <tr><td><code>system_type</code></td><td><code>str</code></td><td><span class="tag tag-opt">Optional</span></td><td><code>"general"</code></td><td>polynomial | trigonometric | exponential | mixed</td></tr>
+    <tr><td><code>x_range</code></td><td><code>list[float]</code></td><td><span class="tag tag-opt">Optional</span></td><td><code>[-6, 6]</code></td><td>Suggested x-axis range for plotting</td></tr>
+    <tr><td><code>y_range</code></td><td><code>list[float]</code></td><td><span class="tag tag-opt">Optional</span></td><td><code>[-6, 6]</code></td><td>Suggested y-axis range for plotting</td></tr>
+    <tr><td><code>z_range</code></td><td><code>list[float]</code></td><td><span class="tag tag-opt">Optional</span></td><td><code>[-6, 6]</code></td><td>Suggested z-axis range (3D)</td></tr>
+    <tr><td><code>description</code></td><td><code>str</code></td><td><span class="tag tag-opt">Optional</span></td><td><code>"Nonlinear…"</code></td><td>Brief natural language description</td></tr>
+  </tbody>
+</table>
+
+<hr class="divider">
+
+<div class="two-col">
+  <div>
+    <!-- 5. Gemini Config -->
+    <h2>5. Gemini API Configuration</h2>
+    <p class="source">core/agent.py</p>
+    <table>
+      <thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>model</code></td><td><code>gemini-3.1-pro-preview</code></td><td>Gemini model identifier</td></tr>
+        <tr><td><code>temperature</code></td><td><code>0.1</code> / <code>0.2</code></td><td>Parse / generate randomness</td></tr>
+        <tr><td><code>thinking_level</code></td><td><code>"HIGH"</code></td><td>Deep reasoning mode</td></tr>
+        <tr><td><code>GEMINI_API_KEY</code></td><td>From <code>.env</code></td><td>Authentication key</td></tr>
+      </tbody>
+    </table>
+
+    <!-- 7. Manim Config -->
+    <h2>7. Manim Engine Config</h2>
+    <p class="source">core/manim_engine.py</p>
+    <table>
+      <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>code</code></td><td>—</td><td>Manim Python source code</td></tr>
+        <tr><td><code>class_name</code></td><td><code>"GeneratedScene"</code></td><td>Scene class to render</td></tr>
+        <tr><td>Quality flag</td><td><code>-ql</code></td><td>Low quality (fast render)</td></tr>
+        <tr><td><code>media_dir</code></td><td><code>&lt;temp&gt;/media</code></td><td>Output directory</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div>
+    <!-- 6. Newton Params -->
+    <h2>6. Newton's Method Parameters</h2>
+    <p class="source">core/solver.py :: newton_method_nd()</p>
+    <table>
+      <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>f_funcs</code></td><td>—</td><td>N lambdified system functions</td></tr>
+        <tr><td><code>j_funcs</code></td><td>—</td><td>N×N lambdified Jacobian</td></tr>
+        <tr><td><code>x0</code></td><td>—</td><td>Initial guess (length N)</td></tr>
+        <tr><td><code>tol</code></td><td><code>1e-10</code></td><td>Convergence tolerance</td></tr>
+        <tr><td><code>max_iter</code></td><td><code>100</code></td><td>Max iterations per guess</td></tr>
+        <tr><td>Damping limit</td><td><code>10.0</code></td><td>Step norm clamped if exceeded</td></tr>
+        <tr><td>Singularity tol</td><td><code>1e-14</code></td><td>Jacobian det threshold</td></tr>
+        <tr><td>Dedup tol</td><td><code>1e-4</code></td><td>Solution equality tolerance</td></tr>
+        <tr><td>Convergence</td><td><code>1e-6</code></td><td>Final residual threshold</td></tr>
+      </tbody>
+    </table>
+
+    <!-- 8. Dependencies -->
+    <h2>8. External Dependencies</h2>
+    <p class="source">requirements.txt</p>
+    <table>
+      <thead><tr><th>Package</th><th>Version</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>manim</code></td><td>≥ 0.18.1</td><td>Animation engine</td></tr>
+        <tr><td><code>gradio</code></td><td>≥ 4.0.0</td><td>Web UI framework</td></tr>
+        <tr><td><code>google-genai</code></td><td>Latest</td><td>Gemini AI client</td></tr>
+        <tr><td><code>python-dotenv</code></td><td>Latest</td><td>Environment loader</td></tr>
+        <tr><td><code>sympy</code></td><td>≥ 1.12</td><td>Symbolic math</td></tr>
+        <tr><td><code>numpy</code></td><td>≥ 1.24.0</td><td>Numerical computation</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>
