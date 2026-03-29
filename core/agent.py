@@ -50,7 +50,9 @@ Your job is to parse their input and return a JSON object with the following str
     "equations_latex": ["latex1", "latex2", ...],
     "variables": ["x", "y"] or ["x", "y", "z"] or ["x", "y", "z", "w"] etc.,
     "initial_guesses": [[x0, y0, ...], [x1, y1, ...], ...],
-    "system_type": "polynomial|trigonometric|exponential|mixed",
+    "system_type": "polynomial|trigonometric|mixed|ode",
+    "is_ode": true_or_false,
+    "t_range": [0, t_max],
     "x_range": [xmin, xmax],
     "y_range": [ymin, ymax],
     "z_range": [zmin, zmax],
@@ -58,11 +60,10 @@ Your job is to parse their input and return a JSON object with the following str
 }
 
 CRITICAL RULES:
-1. "equations" must contain SymPy-compatible expressions set equal to zero. For example, if the equation is "x^2 + y^2 = 25", write it as "x**2 + y**2 - 25". Use ** for exponents, not ^.
+1. For algebraic systems, "equations" must contain SymPy-compatible expressions set equal to zero (e.g., "x**2 + y**2 - 25"). For ODEs (like the Lorenz system "dx/dt = ..."), "equations" should be an array of ONLY the right-hand sides (e.g., ["10*(y-x)", "x*(28-z)-y", "x*y-8/3*z"]). Use ** for exponents.
 2. Use standard Python/SymPy math functions: sin, cos, tan, exp, log, sqrt, Abs, pi, E
-3. "equations_latex" should be the human-readable LaTeX form (e.g., "x^2 + y^2 = 25")
-4. "variables" can be 2, 3, 4, or more variables. Match the system's actual dimensionality.
-   - The number of equations MUST equal the number of variables for Newton's method to work.
+3. "equations_latex" should be the human-readable LaTeX form (e.g., "\\frac{dx}{dt} = 10(y-x)").
+4. "variables" can be 2, 3, 4, or more variables. Match the system's actual dimensionality. For ODEs, do not include 't' in variables.
 5. Provide 4-8 initial guesses spread across the expected solution regions. Think carefully about where solutions might be. This is CRITICAL for finding all solutions.
 6. Set x_range, y_range, z_range to comfortably contain all expected solutions with some margin.
    - z_range is only needed for 3+ variable systems.
@@ -115,6 +116,10 @@ If the user gives a vague or underspecified request, pick a reasonable and inter
         parsed["equations_latex"] = parsed["equations"]
     if "system_type" not in parsed:
         parsed["system_type"] = "general"
+    if "is_ode" not in parsed:
+        parsed["is_ode"] = parsed["system_type"] == "ode"
+    if "t_range" not in parsed:
+        parsed["t_range"] = [0, 10]
     if "x_range" not in parsed:
         parsed["x_range"] = [-6, 6]
     if "y_range" not in parsed:
@@ -122,7 +127,7 @@ If the user gives a vague or underspecified request, pick a reasonable and inter
     if "z_range" not in parsed:
         parsed["z_range"] = [-6, 6]
     if "description" not in parsed:
-        parsed["description"] = "Nonlinear system of equations"
+        parsed["description"] = "Nonlinear system"
 
     return parsed
 
@@ -157,11 +162,33 @@ def generate_solution_animation(
             coords = ", ".join(f"{v:.6f}" for v in step.point)
             newton_str += f"    Iteration {step.iteration}: ({coords}), residual={step.residual:.2e}\n"
 
+    is_ode = parsed_system.get("is_ode", False)
+    
     equations_display = "\n".join(f"  {i+1}. {eq}" for i, eq in enumerate(parsed_system.get("equations_latex", parsed_system["equations"])))
     variables_str = ", ".join(parsed_system["variables"])
 
-    # Dynamic instructions based on dimensionality
-    if n_vars == 2:
+    # Dynamic instructions based on dimensionality and ODE flag
+    if is_ode:
+        plotting_instructions = f"""
+3. **ODE Setup & Axes** (~2 seconds):
+   - Use {"`ThreeDAxes`" if n_vars == 3 else "`Axes`"} to create the coordinate system
+   - Display equations neatly at an edge
+   - Initial condition marked with a dot
+
+4. **Trajectory Animation** (~8-12 seconds):
+   - Animate a glowing dot moving strictly along the generated coordinates.
+   - Leave a continuous, colored trail (e.g. `TracedPath` or `VGroup` of lines) behind the dot as it moves.
+   - For chaotic attractors (like Lorenz), use beautiful gradient colors.
+   - Since this is a continuous trajectory, you MUST load trajectory points or create a `ValueTracker` / `ParametricFunction` solving it on the fly, or just simulate the exact same ODE in the Manim code `construct` using `scipy.integrate.odeint` and then loop over the points to create a smooth curve using `Create()`. Using `scipy.integrate.odeint` inside the Manim scene is highly recommended!
+   {"- Gently rotate camera if in 3D during the long animation (`self.begin_ambient_camera_rotation`)" if n_vars == 3 else ""}
+
+PLOTTING NOTES:
+- The system is an ODE system.
+- Animate the trajectory of the ODE solution over time `t` from {parsed_system["t_range"][0]} to {parsed_system["t_range"][1]}.
+- If using `scipy.integrate.odeint` inside Manim, use up to 2000 points so the animation is smooth.
+{"- Use `ThreeDScene` and `ThreeDAxes` for 3D ODEs." if n_vars == 3 else "- Use `Axes` with ranges x=[" + str(parsed_system["x_range"][0]) + ", " + str(parsed_system["x_range"][1]) + "], y=[" + str(parsed_system["y_range"][0]) + ", " + str(parsed_system["y_range"][1]) + "]"}
+"""
+    elif n_vars == 2:
         plotting_instructions = f"""
 3. **Plot the Curves** (~2-3 seconds):
    - Use `axes.plot_implicit_curve()` for each equation
@@ -303,6 +330,7 @@ AVOID THESE COMMON ERRORS:
 - For `plot_implicit_curve`, the function signature is `lambda x, y: expression` where the curve is where expression = 0
 - For 3D scenes, use `ThreeDScene` as parent and `ThreeDAxes`
 - For 3D dots, use `Dot3D`, not `Dot`
+- For ODE trajectory Manim simulation, MUST import `from scipy.integrate import odeint`
 """
 
     response = client.models.generate_content(
@@ -356,6 +384,7 @@ Common fixes:
 - For 3D scenes: inherit from `ThreeDScene`, use `ThreeDAxes`, `Dot3D`, `Line3D`
 - For `Dot3D`, use `point=` keyword, not positional
 - `set_camera_orientation` needs `phi=` and `theta=` keyword args
+- When using `odeint` from scipy, ensure `import numpy as np` and `from scipy.integrate import odeint` are present
 """
 
     prompt = f"""This Manim code failed to render. Fix it.

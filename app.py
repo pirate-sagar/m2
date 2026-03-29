@@ -33,6 +33,9 @@ EXAMPLES = [
     # ── 4-variable / complex systems ──
     "Solve: x² + y² = 1, y² + z² = 1, z² + w² = 1, w² + x² = 1",
     "Find where x + y + z + w = 4, xy + zw = 1, x² + y² + z² + w² = 6, and xyzw = 0.5",
+    # ── Differential Equations ──
+    "Solve the Lorenz system: dx/dt = 10*(y-x), dy/dt = x*(28-z)-y, dz/dt = x*y - 8/3*z, from (1, 1, 1)",
+    "Simulate the Lotka-Volterra predator-prey model: dx/dt = 1.5*x - x*y, dy/dt = -3*y + x*y with initial populations (1, 1)"
 ]
 
 
@@ -58,18 +61,27 @@ def format_solution_info(result) -> str:
         lines.append(f"**Dimension:** {n_vars} variables, {n_eqs} equations\n")
         lines.append(f"**Description:** {p.get('description', 'N/A')}\n")
         lines.append(f"\n**Equations:**\n")
-        for eq in p.get("equations_latex", p.get("equations", [])):
-            lines.append(f"- $${eq}$$\n")
+        if p.get("is_ode", False):
+            for var, eq in zip(p.get("variables", []), p.get("equations_latex", p.get("equations", []))):
+                lines.append(f"- $$\\frac{{d{var}}}{{dt}} = {eq}$$\n")
+        else:
+            for eq in p.get("equations_latex", p.get("equations", [])):
+                lines.append(f"- $${eq}$$\n")
 
     # ── Solutions ──
     if result.solution and result.solution.solutions:
-        lines.append(f"\n---\n### Solutions Found: {len(result.solution.solutions)}\n")
-        for i, sol in enumerate(result.solution.solutions):
-            coords = ", ".join(f"{v} = {s:.6f}" for v, s in zip(result.solution.variables, sol))
-            lines.append(f"**Solution {i+1}:** ({coords})\n")
+        if result.parsed_system and result.parsed_system.get("is_ode", False):
+            lines.append(f"\n---\n### Initial Condition\n")
+            coords = ", ".join(f"{v} = {s:.6f}" for v, s in zip(result.solution.variables, result.solution.solutions[0]))
+            lines.append(f"**Starting Point:** ({coords})\n")
+        else:
+            lines.append(f"\n---\n### Solutions Found: {len(result.solution.solutions)}\n")
+            for i, sol in enumerate(result.solution.solutions):
+                coords = ", ".join(f"{v} = {s:.6f}" for v, s in zip(result.solution.variables, sol))
+                lines.append(f"**Solution {i+1}:** ({coords})\n")
 
     # ── Newton Iteration Table ──
-    if result.solution and result.solution.newton_history:
+    if result.solution and result.solution.newton_history and not (result.parsed_system and result.parsed_system.get("is_ode", False)):
         lines.append(f"\n---\n### Newton's Method Iterations\n")
         variables = result.solution.variables
         for g_idx, history in enumerate(result.solution.newton_history):

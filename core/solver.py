@@ -126,6 +126,24 @@ def solve_system_from_parsed(parsed: dict) -> SolutionResult:
     n_vars = len(var_names)
     n_eqs = len(equations_raw)
 
+    is_ode = parsed.get("is_ode", False)
+    if is_ode:
+        # For ODEs, we do not solve for roots. We just return success 
+        # so the pipeline can generate Manim scripts for the ODE.
+        return SolutionResult(
+            equations_latex=equations_latex,
+            equations_raw=equations_raw,
+            variables=var_names,
+            solutions=[tuple(initial_guesses[0])] if initial_guesses else [],
+            newton_history=[],
+            system_type=system_type,
+            x_range=x_range,
+            y_range=y_range,
+            z_range=z_range,
+            success=True,
+            error_message="ODE system. Numerical solution is handled in animation."
+        )
+
     if n_eqs < n_vars:
         return SolutionResult(
             equations_latex=equations_latex,
