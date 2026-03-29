@@ -331,6 +331,7 @@ AVOID THESE COMMON ERRORS:
 - For 3D scenes, use `ThreeDScene` as parent and `ThreeDAxes`
 - For 3D dots, use `Dot3D`, not `Dot`
 - For ODE trajectory Manim simulation, MUST import `from scipy.integrate import odeint`
+- NEVER call `.fix_in_frame()` on objects (like BackgroundRectangle, VGroup, etc. as it causes AttributeError). Instead, use `self.add_fixed_in_frame_mobjects(*objects)`.
 """
 
     response = client.models.generate_content(
@@ -385,6 +386,7 @@ Common fixes:
 - For `Dot3D`, use `point=` keyword, not positional
 - `set_camera_orientation` needs `phi=` and `theta=` keyword args
 - When using `odeint` from scipy, ensure `import numpy as np` and `from scipy.integrate import odeint` are present
+- If error is `AttributeError: BackgroundRectangle object has no attribute 'fix_in_frame'`, you MUST REMOVE calls to `.fix_in_frame()` and use `self.add_fixed_in_frame_mobjects(obj)` instead.
 """
 
     prompt = f"""This Manim code failed to render. Fix it.
